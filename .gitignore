@@ -1,6 +1,9 @@
 __pycache__/
 *.pyc
+# API Keys and Secrets
 .env
+service-account-key.json
+backend/service-account-key.json
 venv/
 .streamlit/
 .DS_Store
