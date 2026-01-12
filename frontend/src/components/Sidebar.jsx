@@ -9,7 +9,6 @@ import ConfirmationModal from './ConfirmationModal';
 const Sidebar = () => {
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
   const { modules, getIcon } = useConfig();
@@ -18,15 +17,10 @@ const Sidebar = () => {
   const navItems = modules.filter(m => m.enabled);
 
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+    // Force dark mode
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -109,18 +103,6 @@ const Sidebar = () => {
                 </div>
                 {!isCollapsed && <span className="whitespace-nowrap">Profile</span>}
             </NavLink>
-
-            <Button 
-              variant="light"
-              onPress={toggleTheme}
-              className={`flex items-center justify-start gap-3 px-4 py-3 w-full text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors overflow-hidden ${isCollapsed ? 'justify-center px-0' : ''}`}
-              title={isCollapsed ? (theme === 'dark' ? "Light Mode" : "Dark Mode") : ""}
-            >
-              <div className="flex-shrink-0">
-                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-              </div>
-              {!isCollapsed && <span className="whitespace-nowrap">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
-            </Button>
 
             <Button 
               variant="light"

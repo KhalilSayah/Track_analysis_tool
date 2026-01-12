@@ -14,6 +14,7 @@ import SetupGuide from './modules/SetupGuide/SetupGuide';
 import BindingAnalysis from './modules/BindingAnalysis/BindingAnalysis';
 import ProfileSettings from './modules/Profile/ProfileSettings';
 import Home from './modules/Home/Home';
+import Calendar from './modules/Calendar/Calendar';
 
 // Protected Route Wrapper
 const PrivateRoute = ({ children }) => {
@@ -57,6 +58,7 @@ function App() {
                <Route path="setup-guide" element={<SetupGuide />} />
                <Route path="binding-analysis" element={<BindingAnalysis />} />
                <Route path="profile" element={<ProfileSettings />} />
+               <Route path="calendar" element={<Calendar />} />
                <Route index element={<Home />} />
                {/* Add more modules here as blocks */}
             </Route>

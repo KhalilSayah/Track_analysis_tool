@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap } from 'lucide-react';
+import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap, Calendar } from 'lucide-react';
 import { ConfigContext } from './ConfigContextCore';
 
 export { useConfig } from './ConfigContextCore';
@@ -13,6 +13,14 @@ const DEFAULT_MODULES = [
         enabled: true, 
         beta: true,
         description: "Get AI-powered insights and answers about your karting data."
+    },
+    { 
+        id: 'calendar', 
+        name: 'Calendar', 
+        path: '/dashboard/calendar', 
+        iconName: 'Calendar', 
+        enabled: true,
+        description: "Manage your race schedule and testing sessions."
     },
     { 
         id: 'library', 
@@ -106,6 +114,7 @@ export const ConfigProvider = ({ children }) => {
             case 'Activity': return <Activity size={20} />;
             case 'Settings': return <Settings size={20} />;
             case 'Zap': return <Zap size={20} />;
+            case 'Calendar': return <Calendar size={20} />;
             default: return <Settings size={20} />;
         }
     };
