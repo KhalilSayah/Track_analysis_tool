@@ -29,7 +29,7 @@ const Home = () => {
 
     return (
         <div className="min-h-full flex flex-col">
-            <div className="p-8 max-w-7xl mx-auto w-full flex-1 flex flex-col justify-center">
+            <div className="w-full flex-1 flex flex-col justify-center">
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}

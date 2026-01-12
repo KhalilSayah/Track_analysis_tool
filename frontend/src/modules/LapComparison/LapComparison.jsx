@@ -398,7 +398,7 @@ const LapComparison = () => {
     };
 
     return (
-        <div className="p-6 max-w-[1600px] mx-auto space-y-12 pb-24">
+        <div className="space-y-12 pb-24">
             {/* Header Section */}
             <div className="space-y-4">
                 <div className="flex items-center gap-4">
@@ -406,8 +406,8 @@ const LapComparison = () => {
                     <Chip className="bg-[#e8fe41] text-black font-bold border-none" size="sm">BETA</Chip>
                 </div>
                 <div className="max-w-3xl">
-                    <h2 className="text-3xl font-bold mb-4">AI-Powered Performance Analysis</h2>
-                    <p className="text-zinc-500 text-lg leading-relaxed">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-4">AI-Powered Performance Analysis</h2>
+                    <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
                         This tool uses a hybrid analysis engine to compare two sessions. It extracts your <span className="text-black dark:text-white font-bold">Fastest Lap</span> in full resolution to analyze braking points, apex speeds, and throttle application at the limit, while also reviewing the <span className="text-black dark:text-white font-bold">Full Session</span> to evaluate consistency and tire management.
                     </p>
                 </div>

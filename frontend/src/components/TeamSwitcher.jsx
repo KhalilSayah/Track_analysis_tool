@@ -44,7 +44,7 @@ const TeamSwitcher = () => {
 
     return (
         <>
-            <div className="absolute top-6 right-8 z-50">
+            <div className="absolute top-4 right-4 md:top-6 md:right-8 z-50">
                 <Dropdown>
                     <DropdownTrigger>
                         <Button 
