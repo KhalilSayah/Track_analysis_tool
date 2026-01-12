@@ -16,6 +16,7 @@ import LapComparison from './modules/LapComparison/LapComparison';
 import ProfileSettings from './modules/Profile/ProfileSettings';
 import Home from './modules/Home/Home';
 import Calendar from './modules/Calendar/Calendar';
+import Budget from './modules/Budget/Budget';
 
 // Protected Route Wrapper
 const PrivateRoute = ({ children }) => {
@@ -61,6 +62,7 @@ function App() {
                <Route path="lap-comparison" element={<LapComparison />} />
                <Route path="profile" element={<ProfileSettings />} />
                <Route path="calendar" element={<Calendar />} />
+               <Route path="budget" element={<Budget />} />
                <Route index element={<Home />} />
                {/* Add more modules here as blocks */}
             </Route>

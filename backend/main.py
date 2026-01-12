@@ -19,8 +19,12 @@ from app.core.data_loader import load_csv
 from app.core.analyzer import compute_circuit_characteristics, compute_lap_metrics
 from app.core.ai_interpreter import analyze_comparison, analyze_voice_command, analyze_binding_ai, analyze_lap_comparison
 from app.core.binding_analyzer import analyze_binding, analyze_binding_selection, analyze_reference_fastest_lap
+from app.routers import budget
 
 app = FastAPI(title="Karting Analysis Platform")
+
+# Include Routers
+app.include_router(budget.router, prefix="/api/v1/budget", tags=["budget"])
 
 # CORS Configuration
 origins = [

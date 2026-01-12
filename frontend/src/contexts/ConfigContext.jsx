@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap, Calendar, ArrowRightLeft, Home } from 'lucide-react';
+import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap, Calendar, ArrowRightLeft, Home, Banknote } from 'lucide-react';
 import { ConfigContext } from './ConfigContextCore';
 
 export { useConfig } from './ConfigContextCore';
@@ -30,6 +30,15 @@ const DEFAULT_MODULES = [
         iconName: 'Calendar', 
         enabled: true,
         description: "Manage your race schedule and testing sessions."
+    },
+    { 
+        id: 'budget', 
+        name: 'Budget Monitoring', 
+        path: '/dashboard/budget', 
+        iconName: 'Banknote', 
+        enabled: true,
+        beta: true,
+        description: "Conversational AI assistant for managing team budget."
     },
     { 
         id: 'library', 
@@ -135,6 +144,7 @@ export const ConfigProvider = ({ children }) => {
             case 'Zap': return <Zap size={20} />;
             case 'Calendar': return <Calendar size={20} />;
             case 'ArrowRightLeft': return <ArrowRightLeft size={20} />;
+            case 'Banknote': return <Banknote size={20} />;
             default: return <Settings size={20} />;
         }
     };

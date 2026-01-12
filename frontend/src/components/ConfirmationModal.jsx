@@ -100,14 +100,16 @@ const ConfirmationModal = ({
 
                         {/* Footer */}
                         <div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-end gap-3">
-                            <Button 
-                                variant="light" 
-                                onPress={onClose} 
-                                isDisabled={isLoading}
-                                className="font-medium text-zinc-700 dark:text-zinc-300"
-                            >
-                                {cancelText}
-                            </Button>
+                            {cancelText && (
+                                <Button 
+                                    variant="light" 
+                                    onPress={onClose} 
+                                    isDisabled={isLoading}
+                                    className="font-medium text-zinc-700 dark:text-zinc-300"
+                                >
+                                    {cancelText}
+                                </Button>
+                            )}
                             <Button 
                                 color={getColor()} 
                                 onPress={onConfirm}
