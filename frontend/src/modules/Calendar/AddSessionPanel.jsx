@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading, events = [] }) => {
     const { currentTeam } = useTeam();
-    const [selectedTab, setSelectedTab] = useState("create");
+    const [selectedTab, setSelectedTab] = useState("join");
     const [officialEvents, setOfficialEvents] = useState([]);
     
     // Create Form State
@@ -68,9 +68,9 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
         { key: 'race', label: 'Race Weekend', icon: <Flag size={18} /> },
     ];
 
-    // Determine color based on context
-    const accentColor = currentTeam ? currentTeam.color : '#e8fe41';
-    const accentText = currentTeam ? 'white' : 'black';
+    // Neo Yellow Theme
+    const accentColor = '#e8fe41';
+    const accentText = 'black';
 
     // Helper to format date for input (YYYY-MM-DD)
     const formatDateForInput = (date) => {
@@ -99,7 +99,7 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
     };
 
     return (
-        <Card className="bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 rounded-none shadow-none h-full">
+        <Card className="bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 rounded-l-3xl shadow-2xl h-full">
             <CardBody className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <div 
@@ -127,8 +127,8 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
                     selectedKey={selectedTab}
                     onSelectionChange={setSelectedTab}
                     classNames={{
-                        cursor: "bg-zinc-900 dark:bg-white shadow-sm",
-                        tabContent: "group-data-[selected=true]:text-white dark:group-data-[selected=true]:text-black font-medium",
+                        cursor: "bg-[#e8fe41] shadow-sm",
+                        tabContent: "group-data-[selected=true]:text-black font-bold",
                         tabList: "bg-zinc-100 dark:bg-zinc-800/50 p-1 border border-zinc-200 dark:border-zinc-700/50 rounded-full"
                     }}
                 >
@@ -147,6 +147,7 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 variant="bordered"
+                                radius="lg"
                                 classNames={{
                                     inputWrapper: "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 focus-within:!border-primary"
                                 }}
@@ -164,6 +165,7 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
                                     value={formatDateForInput(selectedRange.start)}
                                     onChange={handleStartDateChange}
                                     variant="bordered"
+                                    radius="lg"
                                     classNames={{
                                         inputWrapper: "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
                                     }}
@@ -178,6 +180,7 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
                                     value={formatDateForInput(selectedRange.end)}
                                     onChange={handleEndDateChange}
                                     variant="bordered"
+                                    radius="lg"
                                     min={formatDateForInput(selectedRange.start)}
                                     classNames={{
                                         inputWrapper: "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
@@ -197,7 +200,7 @@ const AddSessionPanel = ({ selectedRange, onAddSession, onRangeChange, isLoading
                                         type="button"
                                         onClick={() => setType(t.key)}
                                         className={`
-                                            p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all
+                                            p-3 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all
                                             ${type === t.key 
                                                 ? `border-[${accentColor}] bg-[${accentColor}]/10 text-zinc-900 dark:text-white` 
                                                 : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800'

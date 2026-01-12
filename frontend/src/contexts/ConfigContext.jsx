@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap, Calendar } from 'lucide-react';
+import { Activity, Database, ClipboardList, Settings, Sparkles, AlertTriangle, Zap, Calendar, ArrowRightLeft, Home } from 'lucide-react';
 import { ConfigContext } from './ConfigContextCore';
 
 export { useConfig } from './ConfigContextCore';
 
 const DEFAULT_MODULES = [
+    { 
+        id: 'home', 
+        name: 'Home', 
+        path: '/dashboard', 
+        iconName: 'Home', 
+        enabled: true, 
+        locked: true,
+        description: "Dashboard overview and recent activity."
+    },
     { 
         id: 'ai-assistant', 
         name: 'AI Assistant', 
@@ -45,6 +54,15 @@ const DEFAULT_MODULES = [
         iconName: 'Activity', 
         enabled: true,
         description: "Compare telemetry data between two sessions to improve lap times."
+    },
+    { 
+        id: 'lap-comparison', 
+        name: 'Lap Comparison', 
+        path: '/dashboard/lap-comparison', 
+        iconName: 'ArrowRightLeft', 
+        enabled: true,
+        beta: true,
+        description: "Compare two sessions using AI to identify performance differences."
     },
     { 
         id: 'binding-analysis', 
@@ -108,6 +126,7 @@ export const ConfigProvider = ({ children }) => {
     // Helper to get Icon component dynamically
     const getIcon = (iconName) => {
         switch (iconName) {
+            case 'Home': return <Home size={20} />;
             case 'Sparkles': return <Sparkles size={20} />;
             case 'Database': return <Database size={20} />;
             case 'ClipboardList': return <ClipboardList size={20} />;
@@ -115,6 +134,7 @@ export const ConfigProvider = ({ children }) => {
             case 'Settings': return <Settings size={20} />;
             case 'Zap': return <Zap size={20} />;
             case 'Calendar': return <Calendar size={20} />;
+            case 'ArrowRightLeft': return <ArrowRightLeft size={20} />;
             default: return <Settings size={20} />;
         }
     };

@@ -17,7 +17,7 @@ from pydantic import BaseModel
 # Import core logic
 from app.core.data_loader import load_csv
 from app.core.analyzer import compute_circuit_characteristics, compute_lap_metrics
-from app.core.ai_interpreter import analyze_comparison, analyze_voice_command, analyze_binding_ai
+from app.core.ai_interpreter import analyze_comparison, analyze_voice_command, analyze_binding_ai, analyze_lap_comparison
 from app.core.binding_analyzer import analyze_binding, analyze_binding_selection, analyze_reference_fastest_lap
 
 app = FastAPI(title="Karting Analysis Platform")
@@ -140,6 +140,51 @@ class AnalyzeAIRequest(BaseModel):
     label1: str
     label2: str
     language: str = "en"
+
+class LapComparisonRequest(BaseModel):
+    url1: str
+    url2: str
+    label1: str
+    label2: str
+    storage_path1: Optional[str] = None
+    storage_path2: Optional[str] = None
+
+@app.post("/api/v1/analyze/lap-comparison")
+async def analyze_lap_comparison_endpoint(request: LapComparisonRequest):
+    try:
+        # Download files
+        file_obj1 = await download_file_content(request.url1, request.storage_path1)
+        file_obj2 = await download_file_content(request.url2, request.storage_path2)
+        
+        # Read content as string (assuming utf-8 or similar)
+        # Note: AiM CSVs might have different encodings. load_csv handles it, but here we want raw text?
+        # Or maybe we should use load_csv to clean it first?
+        # The prompt says "AiM CSV files". Raw text is safer for the AI to interpret "metadata" if it's in header.
+        # But we need to handle encoding.
+        
+        def read_file_content(f):
+            try:
+                return f.read().decode('utf-8')
+            except UnicodeDecodeError:
+                f.seek(0)
+                return f.read().decode('latin-1')
+        
+        content1 = read_file_content(file_obj1)
+        content2 = read_file_content(file_obj2)
+        
+        result = analyze_lap_comparison(
+            content1,
+            content2,
+            request.label1,
+            request.label2,
+            MISTRAL_API_KEY
+        )
+        
+        return result
+            
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error analyzing lap comparison: {str(e)}")
 
 @app.post("/api/v1/analyze/metrics")
 async def analyze_metrics(request: AnalyzeMetricsRequest):

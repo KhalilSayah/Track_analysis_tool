@@ -57,11 +57,12 @@ const Sidebar = () => {
             </Button>
           </div>
           
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
             {navItems.map((item) => (
               <NavLink
                 key={item.id}
                 to={item.path}
+                end={item.path === '/dashboard'}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-xl transition-all overflow-hidden ${
                     isActive 

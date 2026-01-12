@@ -12,6 +12,7 @@ import SessionLogging from './modules/SessionLogging/SessionLogging';
 import AIAssistant from './modules/AIAssistant/AIAssistant';
 import SetupGuide from './modules/SetupGuide/SetupGuide';
 import BindingAnalysis from './modules/BindingAnalysis/BindingAnalysis';
+import LapComparison from './modules/LapComparison/LapComparison';
 import ProfileSettings from './modules/Profile/ProfileSettings';
 import Home from './modules/Home/Home';
 import Calendar from './modules/Calendar/Calendar';
@@ -57,6 +58,7 @@ function App() {
                <Route path="ai-assistant" element={<AIAssistant />} />
                <Route path="setup-guide" element={<SetupGuide />} />
                <Route path="binding-analysis" element={<BindingAnalysis />} />
+               <Route path="lap-comparison" element={<LapComparison />} />
                <Route path="profile" element={<ProfileSettings />} />
                <Route path="calendar" element={<Calendar />} />
                <Route index element={<Home />} />
