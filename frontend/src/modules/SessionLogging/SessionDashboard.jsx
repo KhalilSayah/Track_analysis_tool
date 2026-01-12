@@ -3,11 +3,13 @@ import { collection, query, onSnapshot, orderBy, deleteDoc, doc, where } from 'f
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { Button, Input } from "@heroui/react";
 
 const SessionDashboard = () => {
   const { currentUser } = useAuth();
+  const { currentTeam } = useTeam();
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [filterDriver, setFilterDriver] = useState('');
@@ -25,17 +27,30 @@ const SessionDashboard = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Use where clause to filter by user
+    // Use where clause to filter by user or team
     // Note: Removed orderBy from query to avoid composite index requirement for now
     // We sort client-side instead
-    const q = query(
-      collection(db, "log_sessions"), 
-      where("userId", "==", currentUser.uid)
-    );
+    let q;
+    if (currentTeam) {
+        q = query(
+            collection(db, "log_sessions"),
+            where("teamId", "==", currentTeam.id)
+        );
+    } else {
+        q = query(
+            collection(db, "log_sessions"), 
+            where("userId", "==", currentUser.uid)
+        );
+    }
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
+      // Filter out team sessions if in personal view
+      if (!currentTeam) {
+          data = data.filter(s => !s.teamId);
+      }
+
       // Client-side sort
       data.sort((a, b) => {
         const dateA = new Date(a.startAt || 0);
@@ -46,7 +61,7 @@ const SessionDashboard = () => {
       setSessions(data);
     });
     return unsubscribe;
-  }, [currentUser]);
+  }, [currentUser, currentTeam]);
 
   const handleDelete = async (id) => {
       if(window.confirm("Are you sure you want to delete this session?")) {

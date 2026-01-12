@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { Button, Input, Select, SelectItem, Textarea, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/react";
 import { ArrowLeft, Save, FileText, Loader2, CheckCircle, AlertCircle, Star, Sparkles, Plus } from 'lucide-react';
 import axios from 'axios';
@@ -35,6 +36,7 @@ const SectionTitle = ({ children, icon: Icon }) => (
 
 const SessionForm = () => {
   const { currentUser } = useAuth();
+  const { currentTeam } = useTeam();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -118,59 +120,54 @@ const SessionForm = () => {
       }
   }, [location.state]);
 
+  // Fetch Tracks
   useEffect(() => {
-    // Fetch available files from all tracks
+    if (!currentUser) return;
+    
+    let q;
+    if (currentTeam) {
+        q = query(collection(db, "tracks"), where("teamId", "==", currentTeam.id));
+    } else {
+        q = query(collection(db, "tracks"), where("createdBy", "==", currentUser.uid));
+    }
+
+    getDocs(q).then(snapshot => {
+      let data = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+      if (!currentTeam) {
+          data = data.filter(t => !t.teamId);
+      }
+      data.sort((a, b) => a.name.localeCompare(b.name));
+      setTracks(data);
+    });
+  }, [currentUser, currentTeam]);
+
+  // Fetch Available CSV Files
+  useEffect(() => {
+    if (!currentUser || !formData.track) return;
+    
+    // Find track ID
+    const selectedTrack = tracks.find(t => t.name === formData.track);
+    if (!selectedTrack) return;
+
+    // Fetch files from subcollection
     const fetchFiles = async () => {
-        if (!currentUser) return;
         try {
-            // 1. Get all tracks created by the user
-            const tracksQuery = query(
-                collection(db, "tracks"),
-                where("createdBy", "==", currentUser.uid)
-            );
-            const tracksSnapshot = await getDocs(tracksQuery);
-
-            // 2. For each track, fetch its sessions
-            const filePromises = tracksSnapshot.docs.map(async (trackDoc) => {
-                const sessionsRef = collection(db, "tracks", trackDoc.id, "sessions");
-                const sessionsSnapshot = await getDocs(sessionsRef);
-                return sessionsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            });
-
-            // 3. Flatten and sort
-            const filesArrays = await Promise.all(filePromises);
-            const files = filesArrays.flat();
-            files.sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
-            
+            const sessionsRef = collection(db, "tracks", selectedTrack.id, "sessions");
+            const snapshot = await getDocs(sessionsRef);
+            const files = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })).sort((a, b) => (b.uploadedAt?.seconds || 0) - (a.uploadedAt?.seconds || 0));
             setAvailableFiles(files);
         } catch (error) {
             console.error("Error fetching files:", error);
         }
     };
     fetchFiles();
+  }, [currentUser, formData.track, tracks]);
 
-    // Fetch Tracks
-    const fetchTracks = async () => {
-        if (!currentUser) return;
-        try {
-            const q = query(
-                collection(db, "tracks"),
-                where("createdBy", "==", currentUser.uid)
-            );
-            const querySnapshot = await getDocs(q);
-            const trackList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            trackList.sort((a, b) => a.name.localeCompare(b.name));
-            setTracks(trackList);
-        } catch (error) {
-            console.error("Error fetching tracks:", error);
-        }
-    };
-    fetchTracks();
-
-    if (isEdit) {
+  useEffect(() => {
+    if (isEdit && currentUser) {
       const fetchSession = async () => {
         const docRef = doc(db, "log_sessions", id);
         const docSnap = await getDoc(docRef);
@@ -206,12 +203,19 @@ const SessionForm = () => {
       if (!newTrackName.trim()) return;
       setIsCreatingTrack(true);
       try {
-          const docRef = await addDoc(collection(db, "tracks"), {
+          const trackData = {
               name: newTrackName.trim(),
-              createdAt: serverTimestamp()
-          });
+              createdAt: serverTimestamp(),
+              createdBy: currentUser.uid
+          };
+
+          if (currentTeam) {
+              trackData.teamId = currentTeam.id;
+          }
+
+          const docRef = await addDoc(collection(db, "tracks"), trackData);
           // Update local state
-          const newTrack = { id: docRef.id, name: newTrackName.trim() };
+          const newTrack = { id: docRef.id, ...trackData };
           const updatedTracks = [...tracks, newTrack].sort((a, b) => a.name.localeCompare(b.name));
           setTracks(updatedTracks);
           setFormData(prev => ({ ...prev, track: newTrack.name })); // Auto select
@@ -310,6 +314,10 @@ const SessionForm = () => {
               startAt: new Date(`${formData.date}T${formData.time}`).toISOString(),
               updatedAt: serverTimestamp()
           };
+
+          if (currentTeam) {
+              sessionData.teamId = currentTeam.id;
+          }
           
           if (!isEdit) {
               sessionData.createdAt = serverTimestamp();
@@ -726,7 +734,7 @@ const SessionForm = () => {
           </div>
       </div>
       {/* Create Track Modal */}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} classNames={{ base: "bg-zinc-900 border border-zinc-800 text-white" }}>
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center" classNames={{ base: "bg-zinc-900 border border-zinc-800 text-white mx-auto" }}>
         <ModalContent>
           {(onClose) => (
             <>

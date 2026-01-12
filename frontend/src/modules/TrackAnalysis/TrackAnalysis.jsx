@@ -4,6 +4,7 @@ import { Activity, AlertCircle, FileText, ChevronDown, Map, BarChart2, Cpu, Play
 import { collection, query, getDocs, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { Card, CardBody, CardHeader, Button, Select, SelectItem, Input, Tooltip as HeroTooltip, Spinner } from "@heroui/react";
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -74,6 +75,7 @@ const TrackMap = ({ data, color }) => {
 
 const TrackAnalysis = () => {
   const { currentUser } = useAuth();
+  const { currentTeam } = useTeam();
   // Mode: 'history' | 'new' | 'analysis'
   const [mode, setMode] = useState('history');
   const [currentAnalysisId, setCurrentAnalysisId] = useState(null);
@@ -123,17 +125,25 @@ const TrackAnalysis = () => {
   useEffect(() => {
     if (!currentUser) return;
     const fetchTracks = async () => {
-      const q = query(
-        collection(db, "tracks"), 
-        where("createdBy", "==", currentUser.uid)
-      );
+      let q;
+      if (currentTeam) {
+          q = query(collection(db, "tracks"), where("teamId", "==", currentTeam.id));
+      } else {
+          q = query(collection(db, "tracks"), where("createdBy", "==", currentUser.uid));
+      }
+      
       const snapshot = await getDocs(q);
-      const tracksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let tracksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (!currentTeam) {
+          tracksData = tracksData.filter(t => !t.teamId);
+      }
+
       tracksData.sort((a, b) => a.name.localeCompare(b.name));
       setTracks(tracksData);
     };
     fetchTracks();
-  }, [currentUser]);
+  }, [currentUser, currentTeam]);
 
   // Fetch Sessions when Track 1 changes
   useEffect(() => {
@@ -175,17 +185,26 @@ const TrackAnalysis = () => {
       setSavedAnalyses([]);
       return;
     }
-    const q = query(
-      collection(db, "analyses"), 
-      where("userId", "==", currentUser.uid)
-    );
+    
+    let q;
+    if (currentTeam) {
+        q = query(collection(db, "analyses"), where("teamId", "==", currentTeam.id));
+    } else {
+        q = query(collection(db, "analyses"), where("userId", "==", currentUser.uid));
+    }
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (!currentTeam) {
+          docs = docs.filter(d => !d.teamId);
+      }
+
       docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setSavedAnalyses(docs);
     });
     return unsubscribe;
-  }, [currentUser]);
+  }, [currentUser, currentTeam]);
 
   const handleSaveAnalysis = async () => {
     if (!metricsResult || !selectedSession1 || !selectedSession2) return;
@@ -193,7 +212,7 @@ const TrackAnalysis = () => {
     setSaving(true);
     try {
       const name = `${metricsResult[0].label} vs ${metricsResult[1].label}`;
-      const docRef = await addDoc(collection(db, "analyses"), {
+      const analysisData = {
         name,
         createdAt: serverTimestamp(),
         userId: currentUser.uid,
@@ -203,7 +222,13 @@ const TrackAnalysis = () => {
         session2: selectedSession2,
         metricsResult,
         aiResult: aiResult || null
-      });
+      };
+
+      if (currentTeam) {
+          analysisData.teamId = currentTeam.id;
+      }
+
+      const docRef = await addDoc(collection(db, "analyses"), analysisData);
       setCurrentAnalysisId(docRef.id);
       // Optional: Show success toast
     } catch (err) {

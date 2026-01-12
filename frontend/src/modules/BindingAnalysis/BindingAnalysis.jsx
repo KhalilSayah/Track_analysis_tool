@@ -5,10 +5,12 @@ import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestor
 import axios from 'axios';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const BindingAnalysis = () => {
     const { currentUser } = useAuth();
+    const { currentTeam } = useTeam();
     const [tracks, setTracks] = useState([]);
     const [sessions, setSessions] = useState([]);
     
@@ -37,20 +39,29 @@ const BindingAnalysis = () => {
     // Fetch Tracks
     useEffect(() => {
         if (!currentUser) return;
-        const q = query(
-            collection(db, "tracks"), 
-            where("createdBy", "==", currentUser.uid)
-        );
+        
+        let q;
+        if (currentTeam) {
+            q = query(collection(db, "tracks"), where("teamId", "==", currentTeam.id));
+        } else {
+            q = query(collection(db, "tracks"), where("createdBy", "==", currentUser.uid));
+        }
+
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const tracksData = snapshot.docs.map(doc => ({
+            let tracksData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
+            
+            if (!currentTeam) {
+                tracksData = tracksData.filter(t => !t.teamId);
+            }
+
             tracksData.sort((a, b) => a.name.localeCompare(b.name));
             setTracks(tracksData);
         });
         return unsubscribe;
-    }, [currentUser]);
+    }, [currentUser, currentTeam]);
 
     // Fetch Sessions for Selected Track
     useEffect(() => {

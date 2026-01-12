@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ConfigProvider } from './contexts/ConfigContext';
+import { TeamProvider } from './contexts/TeamContext';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -38,9 +39,10 @@ function App() {
   return (
     <ConfigProvider>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Landing />} />
+        <TeamProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             
             <Route path="/dashboard" element={
@@ -59,7 +61,8 @@ function App() {
                {/* Add more modules here as blocks */}
             </Route>
           </Routes>
-        </Router>
+          </Router>
+        </TeamProvider>
       </AuthProvider>
     </ConfigProvider>
   );

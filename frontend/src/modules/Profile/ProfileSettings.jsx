@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardBody, CardHeader, Input, Button, Spacer } from "@heroui/react";
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { updatePassword, updateProfile } from 'firebase/auth';
-import { Lock, User, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Lock, User, Save, AlertCircle, CheckCircle, Users, Plus, Hash, LogOut } from 'lucide-react';
 import SectionTitle from '../../components/SectionTitle';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const ProfileSettings = () => {
   const { currentUser } = useAuth();
+  const { userTeams, createTeam, joinTeam, leaveTeam } = useTeam();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
@@ -14,9 +17,81 @@ const ProfileSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
 
+  // Team State
+  const [teamName, setTeamName] = useState('');
+  const [teamColor, setTeamColor] = useState('#e8fe41');
+  const [joinCode, setJoinCode] = useState('');
+  const [teamMessage, setTeamMessage] = useState({ type: '', content: '' });
+  const [isTeamLoading, setIsTeamLoading] = useState(false);
+  
+  // Leave Team Modal State
+  const [teamToLeave, setTeamToLeave] = useState(null);
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  const TEAM_COLORS = [
+      '#e8fe41', // Neon Yellow (Default)
+      '#3b82f6', // Blue
+      '#ef4444', // Red
+      '#10b981', // Green
+      '#8b5cf6', // Purple
+      '#f97316', // Orange
+      '#ec4899', // Pink
+      '#06b6d4', // Cyan
+  ];
+
   useEffect(() => {
     document.title = "Profile Settings | Karting Analysis";
   }, []);
+
+  const handleCreateTeam = async () => {
+      if (!teamName.trim()) {
+          setTeamMessage({ type: 'error', content: "Team name is required" });
+          return;
+      }
+      setIsTeamLoading(true);
+      setTeamMessage({ type: '', content: '' });
+      try {
+          await createTeam(teamName, teamColor);
+          setTeamMessage({ type: 'success', content: "Team created successfully!" });
+          setTeamName('');
+      } catch (error) {
+          setTeamMessage({ type: 'error', content: error.message });
+      } finally {
+          setIsTeamLoading(false);
+      }
+  };
+
+  const handleJoinTeam = async () => {
+      if (!joinCode.trim() || joinCode.length !== 6) {
+          setTeamMessage({ type: 'error', content: "Please enter a valid 6-character code" });
+          return;
+      }
+      setIsTeamLoading(true);
+      setTeamMessage({ type: '', content: '' });
+      try {
+          await joinTeam(joinCode.toUpperCase());
+          setTeamMessage({ type: 'success', content: "Joined team successfully!" });
+          setJoinCode('');
+      } catch (error) {
+          setTeamMessage({ type: 'error', content: error.message });
+      } finally {
+          setIsTeamLoading(false);
+      }
+  };
+
+  const handleConfirmLeave = async () => {
+      if (!teamToLeave) return;
+      setIsLeaving(true);
+      try {
+          await leaveTeam(teamToLeave.id);
+          setTeamMessage({ type: 'success', content: `Left team ${teamToLeave.name} successfully` });
+          setTeamToLeave(null);
+      } catch (error) {
+          setTeamMessage({ type: 'error', content: "Failed to leave team: " + error.message });
+      } finally {
+          setIsLeaving(false);
+      }
+  };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -145,6 +220,141 @@ const ProfileSettings = () => {
                     </div>
                 </CardBody>
             </Card>
+
+            {/* Team Management Card */}
+            <Card className="bg-zinc-900/50 border border-zinc-800 h-full lg:col-span-2">
+                <CardHeader className="flex gap-3 px-6 pt-6">
+                    <div className="p-2 rounded-lg bg-[#e8fe41]/10 text-[#e8fe41]">
+                        <Users size={24} />
+                    </div>
+                    <div className="flex flex-col">
+                        <p className="text-md font-bold text-white">Team Management</p>
+                        <p className="text-small text-zinc-500">Create or join teams to collaborate</p>
+                    </div>
+                </CardHeader>
+                <CardBody className="px-6 pb-6 gap-8">
+                    {/* Feedback Message */}
+                    {teamMessage.content && (
+                        <div className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                            teamMessage.type === 'success' 
+                            ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
+                            : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                        }`}>
+                            {teamMessage.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                            {teamMessage.content}
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Create Team */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                <Plus size={16} /> Create New Team
+                            </h3>
+                            <div className="space-y-4 p-4 rounded-2xl bg-black/20 border border-zinc-800">
+                                <div className="space-y-2">
+                                    <label className="text-zinc-400 text-xs">Team Name</label>
+                                    <Input
+                                        placeholder="Enter team name"
+                                        value={teamName}
+                                        onChange={(e) => setTeamName(e.target.value)}
+                                        variant="bordered"
+                                        classNames={{ input: "text-white" }}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-zinc-400 text-xs">Team Color</label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {TEAM_COLORS.map(color => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                className={`w-8 h-8 rounded-full border-2 transition-all ${teamColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
+                                                style={{ backgroundColor: color }}
+                                                onClick={() => setTeamColor(color)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <Button 
+                                    className="w-full bg-white text-black font-bold"
+                                    onPress={handleCreateTeam}
+                                    isLoading={isTeamLoading}
+                                >
+                                    Create Team
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Join Team */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                <Hash size={16} /> Join Existing Team
+                            </h3>
+                            <div className="space-y-4 p-4 rounded-2xl bg-black/20 border border-zinc-800">
+                                <div className="space-y-2">
+                                    <label className="text-zinc-400 text-xs">Invitation Code</label>
+                                    <Input
+                                        placeholder="Enter 6-digit code"
+                                        value={joinCode}
+                                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                                        variant="bordered"
+                                        maxLength={6}
+                                        classNames={{ input: "text-white tracking-widest font-mono" }}
+                                    />
+                                </div>
+                                <Button 
+                                    className="w-full bg-zinc-800 text-white font-bold border border-zinc-700"
+                                    onPress={handleJoinTeam}
+                                    isLoading={isTeamLoading}
+                                >
+                                    Join Team
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* My Teams List */}
+                    {userTeams.length > 0 && (
+                        <div className="space-y-4 pt-4 border-t border-zinc-800">
+                            <h3 className="text-sm font-bold text-white">My Teams</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {userTeams.map(team => (
+                                    <div key={team.id} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div 
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-black"
+                                                style={{ backgroundColor: team.color }}
+                                            >
+                                                {team.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-white text-sm">{team.name}</p>
+                                                <p className="text-xs text-zinc-500 font-mono">Code: {team.code}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-xs text-zinc-500">
+                                                {team.members.length} members
+                                            </div>
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                variant="light"
+                                                color="danger"
+                                                onPress={() => setTeamToLeave(team)}
+                                                className="text-zinc-500 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-500"
+                                            >
+                                                <LogOut size={16} />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </CardBody>
+            </Card>
         </div>
 
         {message.content && (
@@ -170,6 +380,19 @@ const ProfileSettings = () => {
             </Button>
         </div>
       </form>
+
+      <ConfirmationModal 
+          isOpen={!!teamToLeave}
+          onClose={() => setTeamToLeave(null)}
+          onConfirm={handleConfirmLeave}
+          title="Leave Team"
+          description={`Are you sure you want to leave "${teamToLeave?.name}"? You will lose access to all shared files and data.`}
+          confirmText="Leave Team"
+          cancelText="Cancel"
+          icon={<LogOut size={24} className="text-red-500" />}
+          color="danger"
+          isLoading={isLeaving}
+      />
     </div>
   );
 };

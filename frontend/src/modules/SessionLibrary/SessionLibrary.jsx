@@ -11,11 +11,13 @@ import {
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTeam } from '../../contexts/TeamContext';
 import { Plus, Upload, FileText, Database, Loader2 } from 'lucide-react';
-import { Card, CardBody, CardHeader, Button, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
+import { Card, CardHeader, CardBody, Button, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
 
 const SessionLibrary = () => {
   const { currentUser } = useAuth();
+  const { currentTeam } = useTeam();
   const [tracks, setTracks] = useState([]);
   const [sessions, setSessions] = useState([]);
   
@@ -36,23 +38,50 @@ const SessionLibrary = () => {
   useEffect(() => {
     if (!currentUser) return;
     
-    const q = query(
-      collection(db, "tracks"), 
-      where("createdBy", "==", currentUser.uid)
-    );
+    let q;
+    if (currentTeam) {
+        // Team View: Show all tracks belonging to the team
+        q = query(
+            collection(db, "tracks"), 
+            where("teamId", "==", currentTeam.id)
+        );
+    } else {
+        // Personal View: Show tracks created by user
+        // We will filter out team tracks client-side to handle backward compatibility
+        q = query(
+            collection(db, "tracks"), 
+            where("createdBy", "==", currentUser.uid)
+        );
+    }
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const tracksData = snapshot.docs.map(doc => ({
+      let tracksData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+      // If Personal View, filter out tracks that belong to a team
+      if (!currentTeam) {
+          tracksData = tracksData.filter(t => !t.teamId);
+      }
+
       tracksData.sort((a, b) => a.name.localeCompare(b.name));
       setTracks(tracksData);
-      if (tracksData.length > 0 && !selectedTrackId) {
+      
+      // Reset selection if current selection is not in the new list
+      if (selectedTrackId && !tracksData.find(t => t.id === selectedTrackId)) {
+          setSelectedTrackId(null);
+      }
+      
+      // Auto-select first if none selected and tracks exist
+      if (tracksData.length > 0 && (!selectedTrackId || !tracksData.find(t => t.id === selectedTrackId))) {
         setSelectedTrackId(tracksData[0].id);
+      } else if (tracksData.length === 0) {
+          setSelectedTrackId(null);
       }
     });
     return unsubscribe;
-  }, []);
+  }, [currentUser, currentTeam]);
 
   // Fetch Sessions for Selected Track
   useEffect(() => {
@@ -79,11 +108,17 @@ const SessionLibrary = () => {
     if (!newTrackName.trim()) return;
 
     try {
-      await addDoc(collection(db, "tracks"), {
+      const trackData = {
         name: newTrackName.trim(),
         createdAt: serverTimestamp(),
         createdBy: currentUser.uid
-      });
+      };
+
+      if (currentTeam) {
+          trackData.teamId = currentTeam.id;
+      }
+
+      await addDoc(collection(db, "tracks"), trackData);
       setNewTrackName('');
       setShowAddTrack(false);
     } catch (error) {
