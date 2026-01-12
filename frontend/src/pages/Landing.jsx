@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@heroui/react";
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 import InteractiveDemo from '../components/InteractiveDemo';
 import FeatureShowcase from '../components/FeatureShowcase';
 import PricingSection from '../components/PricingSection';
@@ -11,6 +12,7 @@ import Footer from '../components/Footer';
 
 const Landing = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     document.title = "Karting Analysis Platform";
@@ -99,7 +101,7 @@ const Landing = () => {
 
         {/* Content */}
         <div className="absolute bottom-24 left-0 w-full z-20 flex flex-col items-center gap-8">
-          <Link to="/login">
+          <Link to={currentUser ? "/dashboard" : "/login"}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -109,7 +111,7 @@ const Landing = () => {
                 size="md" 
                 className="flex items-center justify-center font-bold text-sm bg-[#e8fe41] text-black px-8 py-4 rounded-full shadow-[0_0_20px_rgba(232,254,65,0.3)] hover:shadow-[0_0_30px_rgba(232,254,65,0.5)] hover:scale-105 transition-all border-none uppercase tracking-wider"
               >
-                Start Engine
+                {currentUser ? "Go to Dashboard" : "Start Engine"}
               </Button>
             </motion.div>
           </Link>

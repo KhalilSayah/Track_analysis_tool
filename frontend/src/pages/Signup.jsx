@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardBody, Input, Button } from "@heroui/react";
 import { Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
+const Signup = () => {
   useEffect(() => {
-    document.title = "Login | Karting Analysis";
+    document.title = "Sign Up | Karting Analysis";
   }, []);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -24,14 +25,19 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      return setError('Passwords do not match');
+    }
+
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to log in: ' + err.message);
+      setError('Failed to create an account: ' + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -52,16 +58,16 @@ const Login = () => {
              />
           </div>
 
-          <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+          <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
           
           <div className="flex gap-1 text-sm text-gray-400 mb-10">
-            <span>Don't have an account yet?</span>
-            <Link to="/signup" className="text-white font-bold hover:text-[#e8fe41] transition-colors">Sign up</Link>
+            <span>Already have an account?</span>
+            <Link to="/login" className="text-white font-bold hover:text-[#e8fe41] transition-colors">Login</Link>
           </div>
 
           {error && <div className="w-full p-3 mb-6 bg-red-500/10 border border-red-500/50 text-red-500 rounded-xl text-sm text-center">{error}</div>}
 
-          <form onSubmit={handleLogin} className="w-full space-y-4">
+          <form onSubmit={handleSignup} className="w-full space-y-4">
             <Input
               placeholder="Email address"
               type="email"
@@ -86,13 +92,25 @@ const Login = () => {
                 inputWrapper: "bg-zinc-900 border-zinc-800 hover:border-zinc-700 focus-within:!border-zinc-600 rounded-2xl h-14 px-4 flex items-center data-[hover=true]:bg-zinc-900 group-data-[focus=true]:bg-zinc-900"
               }}
             />
+            <Input
+              placeholder="Confirm Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              startContent={<Lock size={18} className="text-zinc-500 pointer-events-none flex-shrink-0" />}
+              classNames={{
+                input: "text-white placeholder:text-zinc-600 font-medium ml-2",
+                inputWrapper: "bg-zinc-900 border-zinc-800 hover:border-zinc-700 focus-within:!border-zinc-600 rounded-2xl h-14 px-4 flex items-center data-[hover=true]:bg-zinc-900 group-data-[focus=true]:bg-zinc-900"
+              }}
+            />
             
             <Button
               type="submit"
               className="w-full font-bold text-black text-lg bg-[#e8fe41] hover:bg-[#d6eb3b] rounded-2xl h-14 shadow-[0_0_30px_rgba(232,254,65,0.2)] hover:shadow-[0_0_40px_rgba(232,254,65,0.4)] transition-all mt-4"
               isLoading={isLoading}
             >
-              Login
+              Sign Up
             </Button>
           </form>
 
@@ -120,4 +138,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

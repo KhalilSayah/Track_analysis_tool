@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ConfigProvider } from './contexts/ConfigContext';
 import { TeamProvider } from './contexts/TeamContext';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Landing from './pages/Landing';
 import DashboardLayout from './layouts/DashboardLayout';
 import TrackAnalysis from './modules/TrackAnalysis/TrackAnalysis';
@@ -46,9 +47,10 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            
-            <Route path="/dashboard" element={
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              
+              <Route path="/dashboard" element={
               <PrivateRoute>
                 <DashboardLayout />
               </PrivateRoute>
