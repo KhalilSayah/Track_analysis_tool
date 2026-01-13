@@ -70,29 +70,32 @@ const Home = () => {
                             variants={item}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
+                            className="h-full"
                         >
                             <Card 
                                 isPressable
                                 onPress={() => navigate(module.path)}
-                                className="h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all duration-300 hover:border-[#e8fe41] hover:shadow-[0_0_20px_rgba(232,254,65,0.3)] group rounded-[32px]"
+                                className="h-full w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all duration-300 hover:border-[#e8fe41] hover:shadow-[0_0_20px_rgba(232,254,65,0.3)] group rounded-[32px]"
                             >
-                                <CardHeader className="flex gap-4 px-6 pt-6">
+                                <CardHeader className="flex gap-4 px-6 pt-6 flex-shrink-0">
                                     <div className="p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white group-hover:bg-[#e8fe41] group-hover:text-black transition-colors duration-300">
                                         {getIcon(module.iconName)}
                                     </div>
-                                    <div className="flex flex-col items-start">
-                                        <h3 className="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-[#e8fe41] dark:group-hover:text-[#e8fe41] transition-colors">
-                                            {module.name}
-                                        </h3>
-                                        {module.beta && (
-                                            <span className="text-[10px] font-bold bg-[#e8fe41] text-black px-2 py-0.5 rounded-full">
-                                                BETA
-                                            </span>
-                                        )}
+                                    <div className="flex flex-col items-start justify-center">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-[#e8fe41] dark:group-hover:text-[#e8fe41] transition-colors line-clamp-1">
+                                                {module.name}
+                                            </h3>
+                                            {module.beta && (
+                                                <span className="text-[10px] font-bold bg-[#e8fe41] text-black px-2 py-0.5 rounded-full flex-shrink-0">
+                                                    BETA
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </CardHeader>
-                                <CardBody className="px-6 pb-6 pt-2">
-                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                                <CardBody className="px-6 pb-6 pt-2 flex-grow">
+                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors line-clamp-3">
                                         {module.description || "Access this tool to manage your karting data."}
                                     </p>
                                 </CardBody>

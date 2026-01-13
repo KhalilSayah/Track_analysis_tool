@@ -7,7 +7,7 @@ import { db } from '../../firebase';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import axios from 'axios';
-import { ArrowRightLeft, FileText, AlertCircle, CheckCircle2, Cpu, Zap, Activity, Gauge, Wrench, Lightbulb, Trophy } from 'lucide-react';
+import { ArrowRightLeft, FileText, AlertCircle, CheckCircle2, Cpu, Zap, Activity, Gauge, Wrench, Lightbulb, Trophy, RefreshCcw } from 'lucide-react';
 import SectionTitle from '../../components/SectionTitle';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -237,6 +237,11 @@ const FileSelector = ({ label, onSelect, selectedSession, tracks }) => {
         onSelect(session);
     };
 
+    const handleReset = () => {
+        setSelectedTrackId("");
+        onSelect(null);
+    };
+
     return (
         <Card className="h-full border border-zinc-200 dark:border-zinc-800 shadow-sm rounded-3xl overflow-hidden">
             <CardBody className="p-8 flex flex-col gap-6">
@@ -248,13 +253,23 @@ const FileSelector = ({ label, onSelect, selectedSession, tracks }) => {
                         <h3 className="font-bold text-xl">{label}</h3>
                         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Select Source</p>
                     </div>
-                    {selectedSession && <CheckCircle2 size={24} className="ml-auto text-[#e8fe41]" />}
+                    {(selectedTrackId || selectedSession) && (
+                        <Button 
+                            isIconOnly 
+                            size="sm" 
+                            variant="light" 
+                            className="ml-auto text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                            onPress={handleReset}
+                        >
+                            <RefreshCcw size={18} />
+                        </Button>
+                    )}
                 </div>
 
                 <div className="space-y-4">
                     <Select 
                         label="Select Track" 
-                        placeholder="Choose a track"
+                        isDisabled={!!selectedTrackId}
                         selectedKeys={selectedTrackId ? [selectedTrackId] : []}
                         onChange={(e) => {
                             setSelectedTrackId(e.target.value);
@@ -277,10 +292,9 @@ const FileSelector = ({ label, onSelect, selectedSession, tracks }) => {
 
                     <Select 
                         label="Select Session" 
-                        placeholder="Choose a session"
                         selectedKeys={selectedSession ? [selectedSession.id] : []}
                         onChange={handleSessionChange}
-                        isDisabled={!selectedTrackId || isLoadingSessions}
+                        isDisabled={!selectedTrackId || isLoadingSessions || !!selectedSession}
                         variant="flat"
                         isLoading={isLoadingSessions}
                         classNames={{
