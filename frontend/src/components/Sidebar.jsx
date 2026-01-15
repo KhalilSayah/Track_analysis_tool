@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight, Moon, Sun, LogOut, User, X } from 'lucide-re
 import { auth } from '../firebase';
 import { Button, Chip } from "@heroui/react";
 import { useConfig } from '../contexts/ConfigContext';
+import { useTeam } from '../contexts/TeamContext';
+import { useAuth } from '../contexts/AuthContext';
 import ConfirmationModal from './ConfirmationModal';
 
 const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
@@ -12,9 +14,25 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
   const { modules, getIcon } = useConfig();
+  const { currentTeam } = useTeam();
+  const { currentUser } = useAuth();
+  
+  const isOwner = currentTeam && currentUser && currentTeam.createdBy === currentUser.uid;
+  const isAdmin = currentTeam && currentUser && (isOwner || (Array.isArray(currentTeam.admins) && currentTeam.admins.includes(currentUser.uid)));
+  
+  const hasModuleAccess = (module) => {
+    if (module.locked) return true;
+    if (isAdmin) return true;
+    if (!currentTeam) return true;
+    if (!currentUser) return false;
+    const permissions = currentTeam.permissions || {};
+    const userPerms = permissions[currentUser.uid] || {};
+    if (!Object.prototype.hasOwnProperty.call(userPerms, module.id)) return true;
+    return userPerms[module.id] !== false;
+  };
   
   // Filter only enabled modules for display
-  const navItems = modules.filter(m => m.enabled);
+  const navItems = modules.filter(m => m.enabled && hasModuleAccess(m));
 
   useEffect(() => {
     // Force dark mode

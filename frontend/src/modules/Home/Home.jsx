@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConfig } from '../../contexts/ConfigContext';
-import { motion } from 'framer-motion';
+import { useTeam } from '../../contexts/TeamContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { motion as Motion } from 'framer-motion';
 import { Card, CardBody, CardHeader } from "@heroui/react";
 import UpcomingEventsSlider from './UpcomingEventsSlider';
 import WeeklyCalendarPreview from './WeeklyCalendarPreview';
@@ -10,7 +12,24 @@ import NeoParticles from './NeoParticles';
 const Home = () => {
     const navigate = useNavigate();
     const { modules, getIcon } = useConfig();
-    const enabledModules = modules.filter(m => m.enabled);
+    const { currentTeam } = useTeam();
+    const { currentUser } = useAuth();
+
+    const isOwner = currentTeam && currentUser && currentTeam.createdBy === currentUser.uid;
+    const isAdmin = currentTeam && currentUser && (isOwner || (Array.isArray(currentTeam.admins) && currentTeam.admins.includes(currentUser.uid)));
+
+    const hasModuleAccess = (module) => {
+        if (module.locked) return true;
+        if (isAdmin) return true;
+        if (!currentTeam) return true;
+        if (!currentUser) return false;
+        const permissions = currentTeam.permissions || {};
+        const userPerms = permissions[currentUser.uid] || {};
+        if (!Object.prototype.hasOwnProperty.call(userPerms, module.id)) return true;
+        return userPerms[module.id] !== false;
+    };
+
+    const enabledModules = modules.filter(m => m.enabled && hasModuleAccess(m));
 
     const container = {
         hidden: { opacity: 0 },
@@ -30,7 +49,7 @@ const Home = () => {
     return (
         <div className="min-h-full flex flex-col">
             <div className="w-full flex-1 flex flex-col justify-center">
-                <motion.div 
+                <Motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
@@ -43,29 +62,29 @@ const Home = () => {
                     <p className="text-xl text-zinc-500 dark:text-zinc-400 relative z-10">
                         Remember, you are not building a car that goes <span className="font-bold text-zinc-900 dark:text-white">fast</span>, but a car that can <span className="font-bold text-[#e8fe41]">fly</span>.
                     </p>
-                </motion.div>
+                </Motion.div>
 
                 <UpcomingEventsSlider />
                 
                 <WeeklyCalendarPreview />
 
-                <motion.h2 
+                <Motion.h2 
                     initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="text-2xl font-bold mb-6 text-zinc-900 dark:text-white"
             >
                 Available Tools
-            </motion.h2>
+            </Motion.h2>
 
-                <motion.div 
+                <Motion.div 
                     variants={container}
                     initial="hidden"
                     animate="show"
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 >
                     {enabledModules.map((module) => (
-                        <motion.div 
+                        <Motion.div 
                             key={module.id} 
                             variants={item}
                             whileHover={{ scale: 1.02 }}
@@ -100,9 +119,9 @@ const Home = () => {
                                     </p>
                                 </CardBody>
                             </Card>
-                        </motion.div>
+                        </Motion.div>
                     ))}
-                </motion.div>
+                </Motion.div>
             </div>
         </div>
     );

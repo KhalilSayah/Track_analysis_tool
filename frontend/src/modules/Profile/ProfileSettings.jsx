@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardBody, CardHeader, Input, Button, Spacer } from "@heroui/react";
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeam } from '../../contexts/TeamContext';
@@ -8,6 +9,7 @@ import SectionTitle from '../../components/SectionTitle';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
 const ProfileSettings = () => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { userTeams, createTeam, joinTeam, leaveTeam } = useTeam();
   const [newPassword, setNewPassword] = useState('');
@@ -319,37 +321,51 @@ const ProfileSettings = () => {
                         <div className="space-y-4 pt-4 border-t border-zinc-800">
                             <h3 className="text-sm font-bold text-white">My Teams</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {userTeams.map(team => (
-                                    <div key={team.id} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div 
-                                                className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-black"
-                                                style={{ backgroundColor: team.color }}
-                                            >
-                                                {team.name.substring(0, 2).toUpperCase()}
+                                {userTeams.map(team => {
+                                    const isOwner = team.createdBy === currentUser.uid;
+                                    const isAdmin = Array.isArray(team.admins) ? team.admins.includes(currentUser.uid) || isOwner : isOwner;
+                                    return (
+                                        <div key={team.id} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div 
+                                                    className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-black"
+                                                    style={{ backgroundColor: team.color }}
+                                                >
+                                                    {team.name.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-white text-sm">{team.name}</p>
+                                                    <p className="text-xs text-zinc-500 font-mono">Code: {team.code}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-white text-sm">{team.name}</p>
-                                                <p className="text-xs text-zinc-500 font-mono">Code: {team.code}</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-xs text-zinc-500">
+                                                    {team.members.length} members
+                                                </div>
+                                                {isAdmin && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="light"
+                                                        className="text-zinc-200 border border-zinc-600"
+                                                        onPress={() => navigate(`/dashboard/teams/${team.id}/manage`)}
+                                                    >
+                                                        Manage
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    isIconOnly
+                                                    size="sm"
+                                                    variant="light"
+                                                    color="danger"
+                                                    onPress={() => setTeamToLeave(team)}
+                                                    className="text-zinc-500 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-500"
+                                                >
+                                                    <LogOut size={16} />
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-xs text-zinc-500">
-                                                {team.members.length} members
-                                            </div>
-                                            <Button
-                                                isIconOnly
-                                                size="sm"
-                                                variant="light"
-                                                color="danger"
-                                                onPress={() => setTeamToLeave(team)}
-                                                className="text-zinc-500 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-500"
-                                            >
-                                                <LogOut size={16} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

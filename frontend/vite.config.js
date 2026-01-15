@@ -8,4 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    allowedHosts: ["septavalent-preindebtedly-trula.ngrok-free.dev"],
+  },
 })

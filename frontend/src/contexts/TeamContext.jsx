@@ -21,7 +21,8 @@ export const useTeam = () => {
 };
 
 export const TeamProvider = ({ children }) => {
-    const { currentUser } = useAuth();
+    const auth = useAuth();
+    const currentUser = auth?.currentUser;
     const [currentTeam, setCurrentTeam] = useState(null); // null means "Personal Workspace"
     const [userTeams, setUserTeams] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -42,10 +43,17 @@ export const TeamProvider = ({ children }) => {
                     where("members", "array-contains", currentUser.uid)
                 );
                 const querySnapshot = await getDocs(q);
-                const teams = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const teams = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const admins = Array.isArray(data.admins) && data.admins.length > 0 
+                        ? data.admins 
+                        : [data.createdBy];
+                    return {
+                        id: doc.id,
+                        ...data,
+                        admins
+                    };
+                });
                 setUserTeams(teams);
                 
                 // If previously selected team is still valid, keep it. Otherwise default to null (Personal)
@@ -82,6 +90,8 @@ export const TeamProvider = ({ children }) => {
             code,
             createdBy: currentUser.uid,
             members: [currentUser.uid],
+            admins: [currentUser.uid],
+            permissions: {},
             createdAt: serverTimestamp()
         };
 
@@ -116,7 +126,15 @@ export const TeamProvider = ({ children }) => {
             members: arrayUnion(currentUser.uid)
         });
 
-        const newTeam = { id: teamDoc.id, ...teamData, members: [...teamData.members, currentUser.uid] };
+        const admins = Array.isArray(teamData.admins) && teamData.admins.length > 0 
+            ? teamData.admins 
+            : [teamData.createdBy];
+        const newTeam = { 
+            id: teamDoc.id, 
+            ...teamData, 
+            members: [...teamData.members, currentUser.uid],
+            admins
+        };
         setUserTeams(prev => [...prev, newTeam]);
         return newTeam;
     };
@@ -151,6 +169,15 @@ export const TeamProvider = ({ children }) => {
         }
     };
 
+    const updateTeamInState = (teamId, updates) => {
+        setUserTeams(prev => prev.map(team => 
+            team.id === teamId ? { ...team, ...updates } : team
+        ));
+        setCurrentTeam(prev => 
+            prev && prev.id === teamId ? { ...prev, ...updates } : prev
+        );
+    };
+
     const value = {
         currentTeam,
         userTeams,
@@ -158,6 +185,7 @@ export const TeamProvider = ({ children }) => {
         joinTeam,
         switchTeam,
         leaveTeam,
+        updateTeamInState,
         loading
     };
 

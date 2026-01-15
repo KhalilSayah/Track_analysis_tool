@@ -260,12 +260,14 @@ const SessionForm = () => {
     }
   };
 
-  const handleProcessCsv = async (url) => {
-      if (!url) return;
+  const handleProcessCsv = async (file) => {
+      if (!file || !file.storageUrl) return;
       setProcessingCsv(true);
+
       try {
           const response = await axios.post('http://localhost:8000/api/v1/sessions/process-csv', {
-              file_url: url
+              file_url: file.storageUrl,
+              storage_path: file.storagePath || null
           });
           
           const { metrics, metadata } = response.data;
@@ -393,6 +395,7 @@ const SessionForm = () => {
                           <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Track</label>
                           <div className="flex gap-2">
                               <Select 
+                                  aria-label="Track"
                                   selectedKeys={formData.track ? new Set([tracks.find(t => t.name === formData.track)?.id].filter(Boolean)) : new Set([])}
                                   onSelectionChange={(keys) => {
                                       const selectedId = Array.from(keys)[0];
@@ -427,6 +430,7 @@ const SessionForm = () => {
                       <div className="flex flex-col gap-1">
                           <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Session Type</label>
                           <Select 
+                            aria-label="Session type"
                             selectedKeys={new Set([formData.sessionType])} 
                             onSelectionChange={(keys) => handleChange('sessionType', Array.from(keys)[0])}
                             size="sm"
@@ -563,12 +567,16 @@ const SessionForm = () => {
                   <SectionTitle icon={FileText}>Data File</SectionTitle>
                   <div className="flex gap-2 mb-2">
                       <Select
+                          aria-label="Data file"
                           placeholder="Select a data file..."
                           selectedKeys={formData.linkedCsvUrl ? new Set([formData.linkedCsvUrl]) : new Set()}
                           onSelectionChange={(keys) => {
                               const url = Array.from(keys)[0];
                               handleChange('linkedCsvUrl', url);
-                              handleProcessCsv(url);
+                              const file = availableFiles.find(f => f.storageUrl === url);
+                              if (file) {
+                                  handleProcessCsv(file);
+                              }
                           }}
                           size="sm"
                           classNames={{ 
