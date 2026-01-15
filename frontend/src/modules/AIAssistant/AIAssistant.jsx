@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Input, Textarea, Card, CardBody, Spinner, Chip } from "@heroui/react";
 import { Mic, MicOff, Sparkles, ArrowRight, Play, CheckCircle, AlertCircle, RefreshCcw, FileText, BrainCircuit } from 'lucide-react';
 import axios from 'axios';
+import { API_URL } from '../../api/config';
 import SectionTitle from '../../components/SectionTitle';
 
 // Reusing the logic from VoiceInput but expanding it for a full page experience
@@ -90,7 +91,7 @@ const AIAssistant = () => {
     setError(null);
     
     try {
-        const response = await axios.post('http://localhost:8000/api/v1/analyze/voice-command', {
+        const response = await axios.post(`${API_URL}/api/v1/analyze/voice-command`, {
             text: transcript
         });
         

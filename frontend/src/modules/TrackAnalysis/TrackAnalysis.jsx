@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../api/config';
 import { Activity, AlertCircle, FileText, ChevronDown, Map, BarChart2, Cpu, PlayCircle, Save, Clock, ArrowLeft, Plus, Trash2, Calendar, X } from 'lucide-react';
 import { collection, query, getDocs, addDoc, deleteDoc, doc, onSnapshot, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -301,7 +302,7 @@ const TrackAnalysis = () => {
         labels: [t1Name, t2Name] // Use Track Name only for cleaner UI
       };
 
-      const metricsResponse = await axios.post('http://localhost:8000/api/v1/analyze/metrics', payloadMetrics);
+      const metricsResponse = await axios.post(`${API_URL}/api/v1/analyze/metrics`, payloadMetrics);
       const metricsData = metricsResponse.data;
       setMetricsResult(metricsData);
       setLoadingMetrics(false);
@@ -316,7 +317,7 @@ const TrackAnalysis = () => {
         language: 'en'
       };
 
-      const aiResponse = await axios.post('http://localhost:8000/api/v1/analyze/ai', payloadAI);
+      const aiResponse = await axios.post(`${API_URL}/api/v1/analyze/ai`, payloadAI);
       setAiResult(aiResponse.data);
 
     } catch (err) {

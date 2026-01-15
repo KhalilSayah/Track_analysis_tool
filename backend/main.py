@@ -27,9 +27,12 @@ app = FastAPI(title="Karting Analysis Platform")
 app.include_router(budget.router, prefix="/api/v1/budget", tags=["budget"])
 
 # CORS Configuration
+# Allow frontend URL from env, defaulting to localhost for dev
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 origins = [
-    "http://localhost:5173",  # React Dev Server
+    "http://localhost:5173",
     "http://localhost:3000",
+    frontend_url,
 ]
 
 app.add_middleware(
@@ -44,11 +47,28 @@ app.add_middleware(
 # For this rebuild, we'll try to load from env, fallback to hardcoded (dev only)
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "9WzPqRnYfvFcH6Osj6KVQOIK1gPjNfrH")
 # FIREBASE_BUCKET = "karting-65c6c.firebasestorage.app" 
-FIREBASE_BUCKET = "sessionsfiles"
+FIREBASE_BUCKET = os.getenv("FIREBASE_BUCKET", "karting-65c6c.firebasestorage.app")
 
 def get_gcs_client():
-    # Load credentials from the JSON file
-    return storage.Client.from_service_account_json("service-account-key.json")
+    # Try to load from environment variable (JSON string) first - useful for Render
+    creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    if creds_json:
+        try:
+            from google.oauth2 import service_account
+            creds_dict = json.loads(creds_json)
+            credentials = service_account.Credentials.from_service_account_info(creds_dict)
+            return storage.Client(credentials=credentials)
+        except Exception as e:
+            print(f"Error loading credentials from env: {e}")
+            # Fallback to file if env loading fails
+            
+    # Fallback to local file
+    try:
+        return storage.Client.from_service_account_json("service-account-key.json")
+    except Exception as e:
+        print(f"Error loading credentials from file: {e}")
+        # Last resort: default credentials (if running on GCP)
+        return storage.Client()
 
 @app.post("/api/v1/upload-session-gcs")
 async def upload_session_gcs(

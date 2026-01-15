@@ -10,6 +10,7 @@ import axios from 'axios';
 import { ArrowRightLeft, FileText, AlertCircle, CheckCircle2, Cpu, Zap, Activity, Gauge, Wrench, Lightbulb, Trophy, RefreshCcw } from 'lucide-react';
 import SectionTitle from '../../components/SectionTitle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../../api/config';
 
 const LoadingAnimation = () => (
     <div className="flex flex-col items-center justify-center py-20 space-y-8">
@@ -393,7 +394,7 @@ const LapComparison = () => {
                 storage_path2: session2.storagePath
             };
 
-            const response = await axios.post('http://localhost:8000/api/v1/analyze/lap-comparison', payload);
+            const response = await axios.post(`${API_URL}/api/v1/analyze/lap-comparison`, payload);
             
             if (response.data && response.data.analysis) {
                 setAnalysisResult(response.data.analysis);

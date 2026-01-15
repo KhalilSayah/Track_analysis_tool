@@ -42,7 +42,7 @@ const BudgetChat = () => {
                 api_key: null // Backend handles fallback
             };
 
-            const response = await axios.post('http://localhost:8000/api/v1/budget/chat', payload);
+            const response = await axios.post(`${API_URL}/api/v1/budget/chat`, payload);
             const data = response.data;
 
             if (data.type === 'action') {

@@ -265,7 +265,7 @@ const SessionForm = () => {
       setProcessingCsv(true);
 
       try {
-          const response = await axios.post('http://localhost:8000/api/v1/sessions/process-csv', {
+          const response = await axios.post(`${API_URL}/api/v1/sessions/process-csv`, {
               file_url: file.storageUrl,
               storage_path: file.storagePath || null
           });

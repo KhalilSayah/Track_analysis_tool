@@ -6,6 +6,7 @@ import axios from 'axios';
 import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeam } from '../../contexts/TeamContext';
+import { API_URL } from '../../api/config';
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const BindingAnalysis = () => {
@@ -93,7 +94,7 @@ const BindingAnalysis = () => {
         setCornerAnalysis(null);
         
         try {
-            const response = await axios.post('http://localhost:8000/api/v1/analyze/binding/init', {
+            const response = await axios.post(`${API_URL}/api/v1/analyze/binding/init`, {
                 file_url: selectedSession.storageUrl,
                 storage_path: selectedSession.storagePath
             });
@@ -136,7 +137,7 @@ const BindingAnalysis = () => {
         setIsAnalyzingCorner(true);
         try {
             console.log("Sending request to backend...");
-            const response = await axios.post('http://localhost:8000/api/v1/analyze/binding/corner', {
+            const response = await axios.post(`${API_URL}/api/v1/analyze/binding/corner`, {
                 file_url: selectedSession.storageUrl,
                 storage_path: selectedSession.storagePath,
                 baseline: baselineData,
@@ -162,7 +163,7 @@ const BindingAnalysis = () => {
         setAiAnalysisResult(null); // Reset AI result on new reference
         
         try {
-            const response = await axios.post('http://localhost:8000/api/v1/analyze/reference', {
+            const response = await axios.post(`${API_URL}/api/v1/analyze/reference`, {
                 file_url: selectedRefSession.storageUrl,
                 storage_path: selectedRefSession.storagePath
             });
@@ -182,7 +183,7 @@ const BindingAnalysis = () => {
         setAiAnalysisResult(null);
         
         try {
-            const response = await axios.post('http://localhost:8000/api/v1/analyze/binding/ai', {
+            const response = await axios.post(`${API_URL}/api/v1/analyze/binding/ai`, {
                 target_corner_data: cornerAnalysis,
                 reference_corners: refAnalysisResult.corners,
                 click_x: selectedPoint.x,

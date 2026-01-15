@@ -140,7 +140,7 @@ const SessionLibrary = () => {
       formData.append('user_id', currentUser.uid);
 
       // Upload via Backend
-      const response = await axios.post('http://localhost:8000/api/v1/upload-session-gcs', formData);
+      const response = await axios.post(`${API_URL}/api/v1/upload-session-gcs`, formData);
       const data = response.data;
       
       // Save Metadata to Firestore Subcollection
