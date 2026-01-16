@@ -32,6 +32,8 @@ frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://www.birdsracing.com",
+    "https://birdsracing.com",
     frontend_url,
 ]
 
@@ -39,8 +41,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # API Key (In production, use env vars)
@@ -445,6 +447,5 @@ async def analyze_binding_ai_endpoint(request: BindingAIRequest):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error running AI analysis: {str(e)}")
-
 
 
