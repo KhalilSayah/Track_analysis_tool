@@ -1,6 +1,7 @@
 import React from 'react';
 import { Twitter, Instagram, Linkedin, Github, Heart } from 'lucide-react';
 import { Button } from "@heroui/react";
+import logo from '../assets/logo.png';
 
 const Footer = () => {
   return (
@@ -10,9 +11,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold font-display text-white">
-                Race<span className="text-[#e8fe41]">Trace</span>
-              </span>
+              <img src={logo} alt="Birds Logo" className="h-16 w-auto" />
             </div>
             <p className="text-zinc-400 leading-relaxed">
               Advanced telemetry analysis for karting enthusiasts. 
@@ -78,7 +77,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-zinc-900 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-zinc-500 text-sm">
-            © {new Date().getFullYear()} RaceTrace. All rights reserved.
+            © {new Date().getFullYear()} Birds. All rights reserved.
           </p>
           <div className="flex items-center space-x-1 text-zinc-500 text-sm">
             <span>Made with</span>

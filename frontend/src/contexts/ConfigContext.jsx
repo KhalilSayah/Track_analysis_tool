@@ -4,7 +4,7 @@ import { ConfigContext } from './ConfigContextCore';
 
 export { useConfig } from './ConfigContextCore';
 
-const DEFAULT_MODULES = [
+export const DEFAULT_MODULES = [
     { 
         id: 'home', 
         name: 'Home', 

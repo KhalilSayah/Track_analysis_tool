@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardBody, CardHeader, Button, Chip } from "@heroui/react";
-import { Check, X, Zap, Database, Brain } from 'lucide-react';
+import { Check, X, Zap, Database, Brain, Calendar, Banknote, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const PricingSection = () => {
@@ -13,11 +13,12 @@ const PricingSection = () => {
       features: [
         { name: "5 Sessions / Month Storage", included: true, icon: <Database size={16} /> },
         { name: "Basic Track Analysis", included: true },
+        { name: "Calendar Management", included: true, icon: <Calendar size={16} /> },
         { name: "3 AI Coach Insights / Month", included: true, icon: <Brain size={16} /> },
         { name: "CSV Upload Support", included: true },
         { name: "Binding Investigation", included: false },
-        { name: "Advanced Setup Guide", included: false },
-        { name: "Team Sharing", included: false }
+        { name: "Budget Monitoring", included: false },
+        { name: "Team Roles & Management", included: false }
       ],
       cta: "Start Free",
       popular: false
@@ -31,11 +32,12 @@ const PricingSection = () => {
       features: [
         { name: "Unlimited Session Storage", included: true, icon: <Database size={16} /> },
         { name: "Advanced Track Analysis", included: true },
+        { name: "Calendar & Schedule", included: true, icon: <Calendar size={16} /> },
         { name: "Unlimited AI Coach", included: true, icon: <Brain size={16} /> },
-        { name: "All File Formats Support", included: true },
+        { name: "Budget Management AI", included: true, icon: <Banknote size={16} /> },
         { name: "Binding Investigation", included: true, icon: <Zap size={16} /> },
-        { name: "Full Setup Guide Access", included: true },
-        { name: "Team Sharing", included: true }
+        { name: "Team Roles & Permissions", included: true, icon: <Users size={16} /> },
+        { name: "Lap Comparison Tools", included: true }
       ],
       cta: "Get Access",
       popular: true,

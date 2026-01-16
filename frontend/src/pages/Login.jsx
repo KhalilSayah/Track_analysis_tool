@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardBody, Input, Button } from "@heroui/react";
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
@@ -38,7 +38,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-dot-pattern p-4">
+    <div className="flex items-center justify-center min-h-screen bg-black p-4 relative">
+      <Link to="/" className="absolute top-8 left-8 text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
+        <ArrowLeft size={20} />
+        <span className="font-medium">Back to Home</span>
+      </Link>
       <Card className="w-full max-w-[500px] bg-zinc-900/70 backdrop-blur-3xl border border-white/10 shadow-2xl rounded-[40px]">
         <CardBody className="p-10 flex flex-col items-center">
           
