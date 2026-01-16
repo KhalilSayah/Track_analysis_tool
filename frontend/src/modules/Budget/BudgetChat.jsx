@@ -7,6 +7,7 @@ import { db } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import { API_URL } from '../../api/config';
 
 const BudgetChat = () => {
     const { currentTeam } = useTeam();
