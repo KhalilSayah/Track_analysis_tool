@@ -65,6 +65,15 @@ export const DEFAULT_MODULES = [
         description: "Compare telemetry data between two sessions to improve lap times."
     },
     { 
+        id: 'analysis-hub', 
+        name: 'Analysis Hub', 
+        path: '/dashboard/analysis-hub', 
+        iconName: 'Activity', 
+        enabled: true,
+        beta: true,
+        description: "Multi-lap telemetry workspace with track overlays and lap management."
+    },
+    { 
         id: 'lap-comparison', 
         name: 'Lap Comparison', 
         path: '/dashboard/lap-comparison', 

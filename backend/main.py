@@ -132,6 +132,12 @@ class ProcessSessionRequest(BaseModel):
     file_url: str
     storage_path: Optional[str] = None
 
+class SessionTelemetryRequest(BaseModel):
+    file_url: str
+    storage_path: Optional[str] = None
+    columns: Optional[List[str]] = None
+    max_points: Optional[int] = None
+
 @app.post("/api/v1/sessions/process-csv")
 async def process_session_csv(request: ProcessSessionRequest):
     try:
@@ -159,6 +165,157 @@ async def process_session_csv(request: ProcessSessionRequest):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing session file: {str(e)}")
+
+@app.post("/api/v1/sessions/telemetry")
+async def get_session_telemetry(request: SessionTelemetryRequest):
+    try:
+        file_obj = await download_file_content(request.file_url, request.storage_path)
+        try:
+            df, metadata = load_csv(file_obj)
+        except Exception:
+            traceback.print_exc()
+            raise HTTPException(status_code=400, detail="Invalid CSV format")
+
+        if df is None or df.empty:
+            raise HTTPException(status_code=400, detail="No telemetry data found in file")
+
+        time_col = "Time"
+        if time_col not in df.columns:
+            candidates = [c for c in df.columns if "time" in str(c)]
+            if candidates:
+                time_col = candidates[0]
+            else:
+                raise HTTPException(status_code=400, detail="No Time column found in telemetry data")
+
+        time = df[time_col].values
+
+        lap_indices = None
+        lap_col = next((c for c in df.columns if str(c).lower() == "lap"), None)
+        if lap_col:
+            lap_series = df[lap_col].copy()
+            lap_series = lap_series.fillna(method="ffill").fillna(method="bfill")
+            try:
+                lap_indices = lap_series.astype(int).values
+            except Exception:
+                lap_indices = np.ones(len(df), dtype=int)
+        else:
+            beacons = []
+            if metadata and "Beacon Markers" in metadata:
+                raw_markers = metadata["Beacon Markers"]
+                for m in raw_markers:
+                    try:
+                        val = float(str(m).strip().strip('"').strip("'"))
+                        beacons.append(val)
+                    except ValueError:
+                        continue
+            if len(beacons) >= 2:
+                lap_indices = np.zeros(len(df), dtype=int)
+                for i in range(len(beacons) - 1):
+                    start_t = beacons[i]
+                    end_t = beacons[i + 1]
+                    duration = end_t - start_t
+                    if duration < 20.0:
+                        continue
+                    mask = (time >= start_t) & (time < end_t)
+                    if np.any(mask):
+                        lap_indices[mask] = i + 1
+                if not np.any(lap_indices > 0):
+                    lap_indices[:] = 1
+            else:
+                lap_indices = np.ones(len(df), dtype=int)
+
+        x = None
+        y = None
+        if "GPS Latitude" in df.columns and "GPS Longitude" in df.columns:
+            lat = df["GPS Latitude"].values
+            lon = df["GPS Longitude"].values
+            if len(lat) > 0:
+                lat0 = lat[0]
+                lon0 = lon[0]
+                y_m = (lat - lat0) * 111132.92
+                x_m = (lon - lon0) * 111412.84 * np.cos(np.deg2rad(lat0))
+                x = x_m
+                y = y_m
+
+        if x is not None and y is not None:
+            dx = np.diff(x, prepend=x[0])
+            dy = np.diff(y, prepend=y[0])
+            dists = np.sqrt(dx ** 2 + dy ** 2)
+            distance = np.cumsum(dists)
+        else:
+            distance = time - time[0]
+
+        lap_distance = np.zeros_like(distance)
+        unique_laps = sorted(list(set(int(v) for v in lap_indices if int(v) > 0)))
+        for lap in unique_laps:
+            mask = lap_indices == lap
+            if not np.any(mask):
+                continue
+            first_idx = np.argmax(mask)
+            base = distance[first_idx]
+            lap_distance[mask] = distance[mask] - base
+
+        n = len(df)
+        max_points = 2000
+        if request.max_points and request.max_points > 0:
+            max_points = max(100, min(int(request.max_points), 5000))
+        step = max(1, n // max_points)
+        indices = np.arange(0, n, step)
+
+        df_sampled = df.iloc[indices]
+        time_s = time[indices]
+        lap_s = lap_indices[indices]
+        dist_s = distance[indices]
+        lap_dist_s = lap_distance[indices]
+        x_s = x[indices] if x is not None else None
+        y_s = y[indices] if y is not None else None
+
+        numeric_cols = [c for c in df_sampled.columns if pd.api.types.is_numeric_dtype(df_sampled[c])]
+        selected_cols = request.columns or numeric_cols
+        selected_cols = [c for c in selected_cols if c in numeric_cols]
+
+        samples = []
+        for i in range(len(df_sampled)):
+            row = df_sampled.iloc[i]
+            sample = {
+                "time": float(time_s[i]),
+                "lap": int(lap_s[i]),
+                "distance": float(dist_s[i]),
+                "lap_distance": float(lap_dist_s[i]),
+            }
+            if x_s is not None and y_s is not None:
+                sample["x"] = float(x_s[i])
+                sample["y"] = float(y_s[i])
+            for col in selected_cols:
+                val = row[col]
+                if pd.isna(val):
+                    continue
+                sample[str(col)] = float(val)
+            samples.append(sample)
+
+        lap_summary = []
+        if len(unique_laps) > 0:
+            for lap in unique_laps:
+                mask = lap_indices == lap
+                lap_times = time[mask]
+                if len(lap_times) < 2:
+                    continue
+                lap_time = lap_times[-1] - lap_times[0]
+                lap_summary.append({"lap": int(lap), "time": float(lap_time)})
+
+        metrics = compute_lap_metrics(df, metadata)
+
+        return {
+            "lap_summary": lap_summary,
+            "metrics": metrics,
+            "columns": [str(c) for c in selected_cols],
+            "samples": samples,
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error extracting session telemetry: {str(e)}")
 
 class AnalyzeAIRequest(BaseModel):
     features1: dict
@@ -447,5 +604,4 @@ async def analyze_binding_ai_endpoint(request: BindingAIRequest):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error running AI analysis: {str(e)}")
-
 

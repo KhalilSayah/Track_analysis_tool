@@ -8,6 +8,7 @@ import Signup from './pages/Signup';
 import Landing from './pages/Landing';
 import DashboardLayout from './layouts/DashboardLayout';
 import TrackAnalysis from './modules/TrackAnalysis/TrackAnalysis';
+import AnalysisHub from './modules/AnalysisHub/AnalysisHub';
 import SessionLibrary from './modules/SessionLibrary/SessionLibrary';
 import SessionLogging from './modules/SessionLogging/SessionLogging';
 import AIAssistant from './modules/AIAssistant/AIAssistant';
@@ -92,6 +93,14 @@ function App() {
                  element={
                    <ModuleRoute moduleId="track-analysis">
                      <TrackAnalysis />
+                   </ModuleRoute>
+                 }
+               />
+               <Route
+                 path="analysis-hub"
+                 element={
+                   <ModuleRoute moduleId="analysis-hub">
+                     <AnalysisHub />
                    </ModuleRoute>
                  }
                />
