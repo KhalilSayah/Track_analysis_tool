@@ -234,7 +234,7 @@ const SessionForm = () => {
     
     setProcessingVoice(true);
     try {
-        const response = await axios.post('http://localhost:8000/api/v1/analyze/voice-command', {
+        const response = await axios.post(`${API_URL}/api/v1/analyze/voice-command`, {
             text: text
         });
         

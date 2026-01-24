@@ -8,13 +8,12 @@ import {
   serverTimestamp,
   where 
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from '../../firebase';
+import { db, auth } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeam } from '../../contexts/TeamContext';
 import { API_URL } from '../../api/config';
-import { Plus, Upload, FileText, Database, Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardBody, Button, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
+import { Plus, Upload, FileText, Database, Loader2, Download } from 'lucide-react';
+import { Card, CardHeader, CardBody, Button, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from "@heroui/react";
 
 const SessionLibrary = () => {
   const { currentUser } = useAuth();
@@ -312,6 +311,7 @@ const SessionLibrary = () => {
                    <TableColumn className="bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400">FILE NAME</TableColumn>
                    <TableColumn className="bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400">DATE UPLOADED</TableColumn>
                    <TableColumn className="bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400">SIZE</TableColumn>
+                   <TableColumn className="bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 text-right">ACTIONS</TableColumn>
                  </TableHeader>
                  <TableBody emptyContent={<div className="text-gray-500 dark:text-gray-400">No sessions found for this track.</div>}>
                    {sessions.map(session => (
@@ -325,6 +325,19 @@ const SessionLibrary = () => {
                        </TableCell>
                        <TableCell className="font-mono text-gray-500 dark:text-gray-400">
                          {(session.fileSize / 1024).toFixed(1)} KB
+                       </TableCell>
+                       <TableCell className="text-right">
+                         {session.storageUrl && (
+                           <Tooltip content="Download Session">
+                             <a 
+                               href={session.storageUrl} 
+                               download 
+                               className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-500 dark:text-gray-400 transition-colors"
+                             >
+                               <Download size={16} />
+                             </a>
+                           </Tooltip>
+                         )}
                        </TableCell>
                      </TableRow>
                    ))}

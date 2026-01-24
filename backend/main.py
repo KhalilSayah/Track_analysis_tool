@@ -1,7 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import shutil
 import os
+
+# Load environment variables
+load_dotenv()
 import json
 import pandas as pd
 import numpy as np
@@ -9,6 +13,7 @@ from typing import List, Optional
 import io
 import traceback
 import urllib.parse
+import uuid
 from google.cloud import storage
 import requests
 import time
@@ -48,8 +53,8 @@ app.add_middleware(
 # API Key (In production, use env vars)
 # For this rebuild, we'll try to load from env, fallback to hardcoded (dev only)
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "9WzPqRnYfvFcH6Osj6KVQOIK1gPjNfrH")
-# FIREBASE_BUCKET = "karting-65c6c.firebasestorage.app" 
-FIREBASE_BUCKET = os.getenv("FIREBASE_BUCKET", "karting-65c6c.firebasestorage.app")
+# GCS bucket configuration
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "karting-sessions-483220")
 
 def get_gcs_client():
     # Try to load from environment variable (JSON string) first - useful for Render
@@ -81,7 +86,16 @@ async def upload_session_gcs(
     try:
         # 1. Initialize Client
         storage_client = get_gcs_client()
-        bucket = storage_client.bucket(FIREBASE_BUCKET)
+        
+        # Ensure bucket exists
+        bucket = storage_client.bucket(GCS_BUCKET_NAME)
+        if not bucket.exists():
+            try:
+                bucket = storage_client.create_bucket(GCS_BUCKET_NAME)
+                print(f"Created bucket {GCS_BUCKET_NAME}")
+            except Exception as e:
+                print(f"Error creating bucket: {e}")
+                pass
         
         # 2. Define Path
         blob_name = f"sessions/{user_id}/{track_id}/{int(time.time())}_{file.filename}"
@@ -94,30 +108,49 @@ async def upload_session_gcs(
             content_type=file.content_type or "application/octet-stream"
         )
         
-        # 4. Make Public (Optional, or generate signed URL)
-        # blob.make_public() # Be careful with this!
-        
-        # Generate Signed URL (valid for 1 hour, or longer if needed)
-        # Note: Ideally, we want a permanent public URL if files are meant to be public
-        # OR we generate signed URLs on demand.
-        # For simplicity in this tool, let's assume we want a long-lived URL or public access.
-        # If the bucket is private, we MUST generate a signed URL.
-        
-        url = blob.generate_signed_url(
-            version="v4",
-            expiration=3600 * 24 * 7, # 7 days
-            method="GET"
-        )
+        # 4. Generate Backend Download URL
+        backend_url = os.getenv("VITE_API_URL", "http://localhost:8000")
+        url = f"{backend_url}/api/v1/sessions/download?storage_path={urllib.parse.quote(blob_name)}"
         
         return {
             "name": blob_name,
-            "bucket": FIREBASE_BUCKET,
+            "bucket": GCS_BUCKET_NAME,
             "url": url
         }
-        
     except Exception as e:
+        print(f"DEBUG: GCS Upload failed. Bucket: {GCS_BUCKET_NAME}")
         traceback.print_exc()
+        if "404" in str(e) and "bucket does not exist" in str(e):
+             raise HTTPException(
+                status_code=404, 
+                detail=f"Bucket '{GCS_BUCKET_NAME}' not found. Verify credentials."
+            )
         raise HTTPException(status_code=500, detail=f"GCS Upload Error: {str(e)}")
+
+@app.get("/api/v1/sessions/download")
+async def download_session(storage_path: str):
+    try:
+        storage_client = get_gcs_client()
+        bucket = storage_client.bucket(GCS_BUCKET_NAME)
+        blob = bucket.blob(storage_path)
+        
+        if not blob.exists():
+             raise HTTPException(status_code=404, detail="File not found in GCS")
+             
+        content = blob.download_as_bytes()
+        filename = storage_path.split("/")[-1]
+        
+        from fastapi.responses import Response
+        return Response(
+            content=content,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"Download Error: {e}")
+        raise HTTPException(status_code=500, detail="Error downloading file")
 
 @app.get("/")
 def read_root():
@@ -310,7 +343,7 @@ async def download_file_content(file_url: str, storage_path: Optional[str] = Non
     if storage_path:
         try:
             storage_client = get_gcs_client()
-            bucket = storage_client.bucket(FIREBASE_BUCKET)
+            bucket = storage_client.bucket(GCS_BUCKET_NAME)
             blob = bucket.blob(storage_path)
             content = blob.download_as_bytes()
             return io.BytesIO(content)
@@ -319,6 +352,7 @@ async def download_file_content(file_url: str, storage_path: Optional[str] = Non
             # Fallback to URL if GCS fails (though unlikely if path is correct)
     
     # URL Fallback
+    # If the URL is our own backend download URL, we could potentially optimize, but requests.get works fine.
     response = requests.get(file_url)
     if response.status_code != 200:
         raise HTTPException(status_code=400, detail=f"Failed to download file from {file_url}")
