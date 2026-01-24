@@ -12,6 +12,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeam } from '../../contexts/TeamContext';
+import { API_URL } from '../../api/config';
 import { Plus, Upload, FileText, Database, Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardBody, Button, Input, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
 
